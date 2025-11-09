@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api'
 
@@ -21,27 +21,34 @@ export default function AllPerks() {
   
   const [error, setError] = useState('')
 
+  // Ref to track if initial load has completed
+  const isInitialMount = useRef(true)
+
   // ==================== SIDE EFFECTS WITH useEffect HOOK ====================
 
- 
- //TODO: HOOKS TO IMPLEMENT
- //* useEffect Hook #1: Initial Data Loading
+  // useEffect Hook #1: Initial Data Loading
   useEffect(() => {
-    // Load all perks when component mounts
+    // Load all perks when component first mounts
     loadAllPerks()
-  }, []) // Empty dependency array means run once on mount
+  }, []) // Empty dependency array means this runs only once on mount
 
- //* useEffect Hook #2: Auto-search on Input Change
+  // useEffect Hook #2: Auto-search on Input Change (with debounce)
   useEffect(() => {
-    // Set up debounce timer
-    const delayDebounce = setTimeout(() => {
-      // Load perks after 500ms of no input changes
+    // Skip auto-search on initial mount (already handled by first useEffect)
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      return
+    }
+
+    // Set up a debounce timer to delay the search
+    const timer = setTimeout(() => {
       loadAllPerks()
-    }, 500) // 500ms debounce delay
-    // Cleanup function to clear timer if inputs change before delay
-    return () => clearTimeout(delayDebounce)
-    // This effect depends on [searchQuery, merchantFilter], so it re-runs whenever either changes
-  }, [searchQuery, merchantFilter]) // Dependencies: re-run when searchQuery or merchantFilter changes
+    }, 500) // Wait 500ms after user stops typing
+
+    // Cleanup function: clear the timer if component unmounts or dependencies change
+    return () => clearTimeout(timer)
+  }, [searchQuery, merchantFilter]) // Re-run when search or filter changes
+
   
   useEffect(() => {
     // Extract all merchant names from perks array
@@ -148,7 +155,8 @@ export default function AllPerks() {
                 type="text"
                 className="input"
                 placeholder="Enter perk name..."
-                
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
               <p className="text-xs text-zinc-500 mt-1">
                 Auto-searches as you type, or press Enter / click Search
@@ -163,7 +171,8 @@ export default function AllPerks() {
               </label>
               <select
                 className="input"
-                
+                value={merchantFilter}
+                onChange={(e) => setMerchantFilter(e.target.value)}
               >
                 <option value="">All Merchants</option>
                 
@@ -229,8 +238,8 @@ export default function AllPerks() {
           
           <Link
             key={perk._id}
-           
-            className="card hover:shadow-lg transition-shadow cursor-pointer"
+            to={`/perks/${perk._id}/view`}
+            className="card hover:shadow-lg transition-shadow cursor-pointer block"
           >
             {/* Perk Title */}
             <div className="font-semibold text-lg text-zinc-900 mb-2">
@@ -269,9 +278,11 @@ export default function AllPerks() {
             )}
 
             {/* Creator info - populated from backend */}
-            <div className="mt-3 pt-3 border-t border-zinc-200 text-xs text-zinc-500">
-              Created by: {perk.creatorName}
-            </div>
+            {perk.createdBy && (
+              <div className="mt-3 pt-3 border-t border-zinc-200 text-xs text-zinc-500">
+                Created by: {perk.createdBy.name || perk.createdBy.email}
+              </div>
+            )}
           </Link>
         ))}
 
@@ -299,4 +310,3 @@ export default function AllPerks() {
     </div>
   )
 }
-

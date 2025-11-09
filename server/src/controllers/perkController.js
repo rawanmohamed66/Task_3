@@ -44,7 +44,7 @@ export async function getAllPerks(req, res, next) {
       .sort({ createdAt: -1 })
       .lean();
 
-    res.json({ perks: perksWithCreator }); // <-- match frontend shape
+    res.json({ perks }); // <-- match frontend shape
   } catch (err) {
     next(err);
   }
@@ -69,20 +69,14 @@ export async function getAllPerksPublic(req, res, next) {
       query.merchant = merchant.trim();
     }
     
-    // Fetch perks and add creator name
+    // Fetch perks with the built query, populate creator info, and sort by newest first
     const perks = await Perk
-      .find(query, '-__v')
+      .find(query)
+      
       .sort({ createdAt: -1 })
-      .lean()
-      .exec();
-    
-    // Add creator name to each perk
-    const perksWithCreator = perks.map(perk => ({
-      ...perk,
-      creatorName: 'karim' // Set creator name to 'karim' for all perks
-    }));
+      .lean();
 
-    res.json({ perks: perksWithCreator });
+    res.json({ perks });
   } catch (err) {
     next(err);
   }
