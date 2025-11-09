@@ -23,13 +23,25 @@ export default function AllPerks() {
 
   // ==================== SIDE EFFECTS WITH useEffect HOOK ====================
 
- /*
- TODO: HOOKS TO IMPLEMENT
- * useEffect Hook #1: Initial Data Loading
- * useEffect Hook #2: Auto-search on Input Change
+ 
+ //TODO: HOOKS TO IMPLEMENT
+ //* useEffect Hook #1: Initial Data Loading
+  useEffect(() => {
+    // Load all perks when component mounts
+    loadAllPerks()
+  }, []) // Empty dependency array means run once on mount
 
-*/
-
+ //* useEffect Hook #2: Auto-search on Input Change
+  useEffect(() => {
+    // Set up debounce timer
+    const delayDebounce = setTimeout(() => {
+      // Load perks after 500ms of no input changes
+      loadAllPerks()
+    }, 500) // 500ms debounce delay
+    // Cleanup function to clear timer if inputs change before delay
+    return () => clearTimeout(delayDebounce)
+    // This effect depends on [searchQuery, merchantFilter], so it re-runs whenever either changes
+  }, [searchQuery, merchantFilter]) // Dependencies: re-run when searchQuery or merchantFilter changes
   
   useEffect(() => {
     // Extract all merchant names from perks array
@@ -257,11 +269,9 @@ export default function AllPerks() {
             )}
 
             {/* Creator info - populated from backend */}
-            {perk.createdBy && (
-              <div className="mt-3 pt-3 border-t border-zinc-200 text-xs text-zinc-500">
-                Created by: {perk.createdBy.name || perk.createdBy.email}
-              </div>
-            )}
+            <div className="mt-3 pt-3 border-t border-zinc-200 text-xs text-zinc-500">
+              Created by: {perk.creatorName}
+            </div>
           </Link>
         ))}
 
